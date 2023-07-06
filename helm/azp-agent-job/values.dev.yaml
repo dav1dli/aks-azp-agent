@@ -1,5 +1,5 @@
 azp:
-  url: https://dev.azure.com/TAGDataAI
+  url: https://dev.azure.com/Org1
   token: $AZP_TOKEN
   pool: DEV-AKS-Agent-Pool
   poolId: 10
@@ -7,14 +7,14 @@ azp:
 replicaCount: 1
 
 image:
-  repository: acreurwwdevms.azurecr.io/azdo-agent-job
+  repository: acrXXX.azurecr.io/azdo-agent-job
   pullPolicy: IfNotPresent
   tag: "$IMGTAG"
 
 imagePullSecret:
   create: true
   use: true
-  registry: acreurwwdevms.azurecr.io
+  registry: acrXXX.azurecr.io
   username: $ACRUSER
   password: $ACRPASS
   email: someone@host.com
