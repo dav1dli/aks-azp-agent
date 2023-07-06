@@ -6,7 +6,7 @@ This repository containes the code building a containerized agent which can be d
 Agent container build is automated with AZDO pipilines in `devops/pipelines`.
 
 The agent expects following environment variables:
-* AZP_URL - AZDO organization URL https://dev.azure.com/{your-organization} (for example, https://dev.azure.com/GlobalInfrastructure)
+* AZP_URL - AZDO organization URL https://dev.azure.com/{your-organization} (for example, https://dev.azure.com/Organization)
 * AZP_TOKEN - [PAT token](https://learn.microsoft.com/en-us/azure/devops/pipelines/agents/linux-agent?view=azure-devops#authenticate-with-a-personal-access-token-pat)
 * AZP_POOL - [AZDO agent pool](https://learn.microsoft.com/en-us/azure/devops/pipelines/agents/pools-queues?view=azure-devops&tabs=yaml%2Cbrowser)
 
