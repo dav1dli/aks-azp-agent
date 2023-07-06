@@ -1,0 +1,10 @@
+variables:
+  ACR_NAME: acrXXX.azurecr.io
+  KV_NAME: KV-XXX-POC-DL
+  SERVICE_CONNECTION: 'Test DevOps connection'
+  RESOURCE_GROUP: RG-XXX-POC-DL
+  AKS_NAME: AKS-XXX-POC-DL
+  AKS_AGENTS_POOL: AKS-Agent-Pool
+  AZP_NAMESPACE: azp-agent
+  AZP_URL: https://dev.azure.com/Organization
+  AZP_POOL: AKS-Agent-Pool

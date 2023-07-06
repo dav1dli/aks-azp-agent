@@ -1,0 +1,70 @@
+azp:
+  url: https://dev.azure.com/GlobalInfrastructure
+  token: $AZP_TOKEN
+  pool: AKS-dltestaks-Agent-Pool
+  poolId: 10
+
+replicaCount: 1
+
+image:
+  repository: acrpocdl.azurecr.io/azdo-agent-job
+  pullPolicy: IfNotPresent
+  tag: "$IMGTAG"
+
+imagePullSecret:
+  create: true
+  use: true
+  registry: acrpocdl.azurecr.io
+  username: $ACRUSER
+  password: $ACRPASS
+  email: someone@host.com
+
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+
+serviceAccount:
+  create: true
+  annotations: {}
+  name: ""
+
+podAnnotations: {}
+
+podSecurityContext:
+  fsGroup: 1001
+
+containerSecurityContext:
+  capabilities:
+    drop:
+      - ALL
+  runAsUser: 1001
+  allowPrivilegeEscalation: false
+
+resources:
+  requests:
+    cpu: "150m"
+    memory: 200Mi
+  limits:
+    cpu: "350m"
+    memory: 2Gi
+
+autoscaling:
+  enabled: false
+  minReplicas: 1
+  maxReplicas: 100
+  targetCPUUtilizationPercentage: 80
+  # targetMemoryUtilizationPercentage: 80
+
+kedaScaling:
+  enabled: true
+  minReplicas: 1
+  maxReplicas: 5
+  pollingInterval: 10
+  successfulJobsHistoryLimit: 5
+  failedJobsHistoryLimit: 5
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}

@@ -1,0 +1,66 @@
+azp:
+  url: https://dev.azure.com/TAGDataAI
+  token: $AZP_TOKEN
+  pool: DEV-AKS-Agent-Pool
+  poolId: 10
+
+replicaCount: 1
+
+image:
+  repository: acreurwwdevms.azurecr.io/azdo-agent-job
+  pullPolicy: IfNotPresent
+  tag: "$IMGTAG"
+
+imagePullSecret:
+  create: true
+  use: true
+  registry: acreurwwdevms.azurecr.io
+  username: $ACRUSER
+  password: $ACRPASS
+  email: someone@host.com
+
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+
+serviceAccount:
+  create: true
+  annotations: {}
+  name: ""
+
+podAnnotations: {}
+
+podSecurityContext:
+  fsGroup: 1001
+
+containerSecurityContext:
+  capabilities:
+    drop:
+      - ALL
+  runAsUser: 1001
+  allowPrivilegeEscalation: false
+
+resources:
+  requests:
+    cpu: "150m"
+    memory: 200Mi
+  limits:
+    cpu: "350m"
+    memory: 2Gi
+
+autoscaling:
+  enabled: false
+  minReplicas: 1
+  maxReplicas: 100
+  targetCPUUtilizationPercentage: 80
+  # targetMemoryUtilizationPercentage: 80
+kedaScaling:
+  enabled: true
+  minReplicas: 1
+  maxReplicas: 5
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}

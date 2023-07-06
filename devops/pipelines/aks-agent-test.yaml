@@ -1,0 +1,50 @@
+trigger: none
+resources:
+- repo: self
+pool: $(AKS_AGENTS_POOL)
+parameters:
+  - name: env
+    displayName: Environment to manage
+    type: string
+    default: poc
+    values:
+    - poc
+    - all
+
+variables:
+- template: config/${{ parameters.env }}.yaml
+
+steps:
+- task: AzureCLI@2
+  displayName: "Set az cli extentsions auto-install"
+  inputs:
+    azureSubscription: $(SERVICE_CONNECTION)
+    scriptType: bash
+    scriptLocation: inlineScript
+    inlineScript: |
+      az config set extension.use_dynamic_install=yes_without_prompt
+- task: HelmInstaller@0
+  displayName: "Install Helm"
+  inputs:
+    installKubectl: true
+- task: AzureCLI@2
+  displayName: "Get AKS cluster credentials"
+  inputs:
+    azureSubscription: $(SERVICE_CONNECTION)
+    scriptType: bash
+    scriptLocation: inlineScript
+    inlineScript: "az aks get-credentials --overwrite-existing --admin -n $(AKS_NAME) -g $(RESOURCE_GROUP)"
+- bash: |
+    export KUBECONFIG="$HOME/.kube/config"
+    helm list -A
+    kubectl get pod -A
+  displayName: Test AKS commands
+- bash: |
+    export KUBECONFIG="$HOME/.kube/config"
+    kubectl config set-context --current --namespace=default
+    [[ $(kubectl get pod alpine) ]] && kubectl delete pod alpine && kubectl wait --for=delete pod alpine --timeout=60s
+    kubectl create -f tests/test-pod.yaml && kubectl wait --for=jsonpath='{.status.phase}'=Running pod/alpine
+    kubectl describe pod alpine
+    kubectl logs alpine -f
+    kubectl delete pod alpine && kubectl wait --for=delete pod/alpine --timeout=60s
+  displayName: Test AKS deployment

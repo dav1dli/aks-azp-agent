@@ -1,0 +1,64 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ include "azp-agent-job.fullname" . }}-template
+  labels:
+    {{- include "azp-agent-job.labels" . | nindent 4 }}
+spec:
+  activeDeadlineSeconds: 300
+  backoffLimit: 0
+  ttlSecondsAfterFinished: 600
+  template:
+    metadata:
+      {{- with .Values.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- include "azp-agent-job.selectorLabels" . | nindent 8 }}
+    spec:
+      {{- if .Values.imagePullSecret.use }}
+      imagePullSecrets:
+        - name: {{ include "azp-agent-job.fullname" . }}-pull-secret
+      {{- end }}
+      {{- if .Values.serviceAccount.create }}
+      serviceAccountName: {{ include "azp-agent-job.serviceAccountName" . }}
+      {{- end }}
+      {{- with .Values.podSecurityContext }}
+      securityContext:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      restartPolicy: Never
+      activeDeadlineSeconds: 240
+      containers:
+        - name: {{ .Chart.Name }}
+          {{- with .Values.containerSecurityContext }}
+          securityContext:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+          env:
+            - name: AZP_AGENT_NAME
+              value: setup-template  # needs to include "template"
+          envFrom:
+            - configMapRef:
+                name: {{ include "azp-agent-job.fullname" . }}-config
+                optional: false
+            - secretRef:
+                name: {{ include "azp-agent-job.fullname" . }}-token
+                optional: false
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}

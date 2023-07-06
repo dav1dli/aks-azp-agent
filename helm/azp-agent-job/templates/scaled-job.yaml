@@ -1,0 +1,33 @@
+{{- if .Values.kedaScaling.enabled }}
+apiVersion: keda.sh/v1alpha1
+kind: ScaledJob
+metadata:
+  name: {{ include "azp-agent-job.fullname" . }}-scaledjob
+spec:
+  jobTargetRef:
+    template:
+      spec:
+        containers:
+        - name: {{ .Chart.Name }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          envFrom:
+            - configMapRef:
+                name: {{ include "azp-agent-job.fullname" . }}-config
+                optional: false
+            - secretRef:
+                name: {{ include "azp-agent-job.fullname" . }}-token
+                optional: false
+  pollingInterval: {{ .Values.kedaScaling.pollingInterval }}
+  successfulJobsHistoryLimit: {{ .Values.kedaScaling.successfulJobsHistoryLimit }}
+  failedJobsHistoryLimit: {{ .Values.kedaScaling.failedJobsHistoryLimit }}
+  maxReplicaCount: {{ .Values.kedaScaling.maxReplicas }}
+  scalingStrategy:
+    strategy: "default"
+  triggers:
+  - type: azure-pipelines
+    metadata:
+      poolID: "{{ .Values.azp.poolId }}"
+      organizationURLFromEnv: "AZP_URL"
+      personalAccessTokenFromEnv: "AZP_TOKEN"
+{{- end }}

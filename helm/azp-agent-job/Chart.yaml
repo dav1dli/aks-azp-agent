@@ -1,0 +1,6 @@
+apiVersion: v2
+name: azp-agent-job
+description: A Helm chart for Kubernetes Azure pipeline agent
+type: application
+version: "1.0.0"
+appVersion: "3.220.5"

@@ -1,0 +1,90 @@
+trigger: none
+
+resources:
+- repo: self
+
+parameters:
+  - name: env
+    displayName: Environment to manage
+    type: string
+    default: poc
+    values:
+    - poc
+    - dev
+    - all
+  - name: cleanup
+    type: boolean
+    default: false
+
+variables:
+- group: default
+- template: config/${{ parameters.env }}.yaml
+- name: chartname
+  value: 'azp-agent-job'
+
+stages:
+- stage: Deploy
+  displayName: Depoly to ${{ parameters.env }}
+  pool:
+    # Use agents from the environment
+    name: $(AKS_AGENTS_POOL)
+  jobs:
+  - job: Deploy
+    displayName: Deploy
+    steps:
+
+    - task: HelmInstaller@0
+      displayName: "Install Helm"
+      inputs:
+        installKubectl: true
+    - task: AzureCLI@2
+      displayName: "Set ACR credentials for the account"
+      inputs:
+        azureSubscription: $(SERVICE_CONNECTION)
+        scriptType: bash
+        scriptLocation: inlineScript
+        inlineScript: |
+          az acr login -n ${ACR_NAME}
+          ACRUSER=$(az acr credential show --name ${ACR_NAME}  --query "username")
+          echo "##vso[task.setvariable variable=ACRUSER;]$ACRUSER"
+          ACRPASS=$(az acr credential show --name ${ACR_NAME} --query "passwords[0].value")
+          echo "##vso[task.setvariable variable=ACRPASS;]$ACRPASS"
+    - task: AzureCLI@2
+      displayName: "Get AKS cluster credentials"
+      inputs:
+        azureSubscription: $(SERVICE_CONNECTION)
+        scriptType: bash
+        scriptLocation: inlineScript
+        inlineScript: "az aks get-credentials --overwrite-existing --admin -n $(AKS_NAME) -g $(RESOURCE_GROUP)"
+    - task: AzureKeyVault@2
+      displayName: "Get secrets from Azure Key Vault"
+      inputs:
+        azureSubscription: $(SERVICE_CONNECTION)
+        KeyVaultName: $(KV_NAME)
+        RunAsPreJob: false
+    - task: CmdLine@2
+      displayName: "Setup helm chart"
+      inputs:
+        script: |
+          helm registry login -u $(ACRUSER) -p $(ACRPASS) $(ACR_NAME)
+          helm repo add apprepo https://$(ACR_NAME)/helm/v1/repo --username $(ACRUSER) --password $(ACRPASS)
+          helm repo list
+          helm pull oci://$(ACR_NAME)/helm/$(chartname)
+          tar -xzvf $(chartname)-*.tgz
+          helm template $(chartname) oci://$(ACR_NAME)/helm/$(chartname) \
+            --set azp.token=$(AZDO-PAT) \
+            --set imagePullSecret.username=$(ACRUSER) \
+            --set imagePullSecret.password=$(ACRPASS) \
+            --namespace $(AZP_NAMESPACE) \
+            -f $(chartname)/values.${{ parameters.env }}.yaml
+
+    - bash: |
+        export KUBECONFIG="$HOME/.kube/config"
+        helm upgrade $(chartname) oci://$(ACR_NAME)/helm/$(chartname) \
+            --set azp.token=$(AZDO-PAT) \
+            --set imagePullSecret.username=$(ACRUSER) \
+            --set imagePullSecret.password=$(ACRPASS) \
+            --namespace $(AZP_NAMESPACE) \
+            -f $(chartname)/values.${{ parameters.env }}.yaml \
+            --install --create-namespace --username $(ACRUSER) --password $(ACRPASS) --debug
+      displayName: Install agent chart
