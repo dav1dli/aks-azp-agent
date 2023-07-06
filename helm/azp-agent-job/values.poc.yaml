@@ -1,20 +1,20 @@
 azp:
-  url: https://dev.azure.com/GlobalInfrastructure
+  url: https://dev.azure.com/Org2
   token: $AZP_TOKEN
-  pool: AKS-dltestaks-Agent-Pool
+  pool: POC-AKS-Agent-Pool
   poolId: 10
 
 replicaCount: 1
 
 image:
-  repository: acrpocdl.azurecr.io/azdo-agent-job
+  repository: acrYYY.azurecr.io/azdo-agent-job
   pullPolicy: IfNotPresent
   tag: "$IMGTAG"
 
 imagePullSecret:
   create: true
   use: true
-  registry: acrpocdl.azurecr.io
+  registry: acrYYY.azurecr.io
   username: $ACRUSER
   password: $ACRPASS
   email: someone@host.com
